@@ -126,7 +126,15 @@ make evaluate
 
 El comando copia el informe a `reports/evaluation.json`. Contiene calibración, verificación
 y comparación con recuperación léxica. Los registros de evaluación se revierten al terminar.
-Para medir Gemini, cambia la configuración como se indica arriba antes de ejecutar el comando.
+`make evaluate` fuerza el simulado y E5 aunque la aplicación esté configurada con Gemini.
+Para medir Gemini explícitamente (realiza llamadas al proveedor):
+
+```sh
+docker compose exec -T -e LLM_PROVIDER=gemini -e EMBEDDING_PROVIDER=fastembed api \
+  python -m scripts.evaluate --output reports/evaluation-gemini.json
+```
+
+Esa ejecución requiere clave/configuración y puede consumir cuota. No forma parte de CI.
 
 GitHub Actions define lint/tipos/pruebas backend y frontend, evaluación real de embeddings y
 una prueba completa con API, Celery, Redis y propagación de trazas.
@@ -136,7 +144,8 @@ una prueba completa con API, Celery, Redis y propagación de trazas.
 
 Implementado: ingestión PDF/Markdown, versiones, pgvector con filtros, generación estructurada,
 reintentos acotados, idempotencia, revisión persistente, trazas y logs correlacionados, datos,
-migraciones, Compose y CI. Consulta la [matriz de requisitos](.docs/PLAN.md) y la
+migraciones, Compose y CI. Consulta la [auditoría completa del enunciado](.docs/COMPLIANCE_AUDIT.md),
+la [matriz de requisitos](.docs/PLAN.md) y la
 [evidencia de verificación](reports/verification.md).
 
 Fuera del alcance: OCR, autenticación multiusuario, despliegue público, publicación al catálogo

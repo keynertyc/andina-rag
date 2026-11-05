@@ -7,7 +7,7 @@
 3. Celery adquiere un advisory lock PostgreSQL por entidad; marca el trabajo en curso.
 4. La ingesta extrae, fragmenta e indexa; activa una versión solo al completar la transacción.
 5. El enriquecimiento recupera evidencia de las versiones del lote, valida la generación
-   y persiste propuesta y referencias. El trabajo externo ocurre sin una transacción abierta.
+   y persiste propuesta y referencias. La llamada generativa ocurre sin una transacción abierta.
 6. React consulta progreso, presenta las citas originales y guarda decisiones del analista.
 
 ## Datos
@@ -102,6 +102,10 @@ producto/lote, intentos, número de fragmentos, modelo y tokens cuando el provee
 
 Logs JSON con `trace_id` y `span_id` inyectados explícitamente. La API devuelve `X-Trace-ID`.
 No se registran prompts, claves, texto completo de guías ni salida inválida del modelo.
+Al convertir errores del SDK o de validación se suprime su encadenamiento: un span automático
+de OTel registra el stacktrace y podría incluir la respuesta privada de la excepción original.
+Se conserva el error de dominio con código seguro y estado ERROR; las regresiones exportan
+spans en memoria y verifican tanto la llamada como su span padre.
 Los eventos de infraestructura fuera de una traza tienen ID cero. Jaeger recibe OTLP/HTTP
 en la red interna y mantiene almacenamiento efímero para esta demostración.
 
@@ -122,6 +126,9 @@ mientras hay trabajo activo y con la página visible. Se refrescan al recuperar 
 usa respuestas de mutación y las invalidaciones de listas/guías. Un catálogo paginado de
 últimas versiones permite seleccionar documentos aunque no estén en la página visible y
 detectar la finalización de su indexación. El ítem recibe un refresco final al terminar el lote.
+Si se filtra un lote, se consulta además su progreso por ID aunque no esté entre los 50
+más recientes. El detalle muestra errores de refetch con los datos anteriores y el borrador
+conservados; descartar para cargar una revisión actual limpia el error de conflicto anterior.
 
 La URL conserva vista, lote, estado, propuesta, documento y paginaciones. Se usa `replaceState`,
 sin crear un historial por cada filtro. Cambiar de contexto con un borrador requiere confirmar;

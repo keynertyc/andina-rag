@@ -21,6 +21,8 @@ Las unitarias cubren límites y solapamiento del chunking, metadatos de origen, 
 validación Pydantic, citas inventadas, corrección acotada, bloqueo sin llamada al LLM,
 backoff, agotamiento, duplicado ocupado y contrato del SDK Gemini (timeout, 429, 5xx y 400).
 Las de React ejercitan edición/aprobación, error 409 y bloqueo desactualizado con citas visibles.
+También se cubren límites Unicode del simulado y privacidad de excepciones OTel exportadas:
+se conserva el error y su stacktrace, sin texto inválido del modelo ni respuesta privada del SDK.
 
 La regresión de Gemini usa el SDK real con `httpx.MockTransport`, sin una llamada de pago:
 comprueba que el cuerpo contiene `responseJsonSchema` y `additionalProperties: false`,
@@ -73,11 +75,12 @@ No lo ejecutes durante trabajo importante en este entorno local.
 make evaluate
 ```
 
+`make evaluate` fija LLM simulado y embeddings E5; no hereda Gemini de la aplicación.
 También desde el host, con los puertos del override de desarrollo activos:
 
 ```sh
 PYTHONPATH=backend DATABASE_URL=postgresql+psycopg://andina:local-demo-only@localhost:55432/andina \
-  uv run python -m scripts.evaluate --check
+  LLM_PROVIDER=mock EMBEDDING_PROVIDER=fastembed uv run python -m scripts.evaluate --check
 ```
 
 Utiliza `samples/cases.json`: 20 casos, ocho de calibración y 12 de verificación. Crea
@@ -151,3 +154,8 @@ El recorrido adicional de navegación móvil comprueba sticky durante scroll, me
 opciones, sección activa, Escape y retorno de foco, cambio a escritorio con menú abierto,
 ancho de 320 px, navegación desde una posición desplazada y cancelación con borrador intacto.
 La navegación se prueba sobre el mismo Nginx de producción, con CSP activa.
+
+Las regresiones de la [auditoría del enunciado](COMPLIANCE_AUDIT.md) añaden aborto/timeout
+durante lectura del cuerpo HTTP, limpieza del conflicto tras cargar la revisión actual,
+error de refetch visible con borrador conservado y progreso de un lote seleccionado fuera
+de los 50 más recientes. La suite actual contiene 55 pruebas backend y 20 frontend.

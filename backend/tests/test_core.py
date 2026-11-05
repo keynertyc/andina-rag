@@ -161,3 +161,20 @@ def test_request_body_limit_precedes_parsing():
 def test_malformed_product_json_returns_validation_error():
     with pytest.raises(AppError):
         parse_products("p.json", b'{"not":"array"}')
+
+
+def test_mock_provider_bounds_a_valid_long_description(product):
+    long_product = type(product).model_validate({**product.model_dump(), "description": "a" * 4001})
+    result = generate_validated(MockProvider(), long_product, [{"id": "c1", "text": "rule"}])
+    assert result.description == "a" * 4000
+    assert len(long_product.description) == 4001
+    assert result.citations == ["c1"]
+
+
+def test_mock_provider_bounds_casefolded_tags_before_deduplication(product):
+    unicode_product = type(product).model_validate(
+        {**product.model_dump(), "brand": "ß" * 100, "category": "ß" * 99 + "x"}
+    )
+    result = generate_validated(MockProvider(), unicode_product, [{"id": "c1", "text": "rule"}])
+    assert result.tags == ["s" * 100]
+    assert result.citations == ["c1"]

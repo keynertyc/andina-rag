@@ -67,7 +67,7 @@ volúmenes del entorno de trabajo no se usaron para generar resultados de prueba
 | Split de verificación de calidad | 12 casos, diez positivos generados, citas/reglas/recuperación y bloqueo comprobados |
 | Smoke con worker y embeddings hash | 14 propuestas, seis bloqueos; aprobación persistida y citas verificadas. Comprueba integración, no calidad E5/Gemini |
 | Traza distribuida | API y worker, recuperación y LLM: 405 spans en `2d655a86a7f3a6d7b9c7e9a7d4169832` |
-| CI | Workflow ampliado con navegador y artefactos de fallo; resultado remoto del candidato pendiente de publicación |
+| CI | Publicado en `e043ab8`; backend, frontend y smoke correctos en [GitHub Actions](https://github.com/keynertyc/andina-rag/actions/runs/42045149124) |
 
 Las capturas y trazas Playwright están en `frontend/test-results/` (ignoradas por Git).
 La evaluación se ejecutó con la versión actual del código y caché del modelo, escribiendo
@@ -105,3 +105,40 @@ El entorno de prueba separado se detuvo al terminar, conservando sus volúmenes 
 
 A solicitud del usuario se actualizó la instalación personal de Impeccable a 4.8.0;
 las nuevas instrucciones de la skill se aplicarán en la siguiente sesión.
+
+## Auditoría completa del enunciado (2026-11-05)
+
+Base publicada: `e043ab8`, repositorio confirmado `PUBLIC` y tres jobs remotos correctos.
+La [matriz de auditoría](../.docs/COMPLIANCE_AUDIT.md) vincula los ocho requisitos funcionales,
+cinco puntos de calidad, cuatro decisiones y cinco entregables con su implementación/evidencia.
+La entrega al portal y la preparación personal para entrevista siguen dependiendo del usuario.
+
+Se reprodujeron y corrigieron siete casos: contenido privado de excepciones en OTel,
+límites del simulado, evaluación que heredaba Gemini, aborto durante lectura HTTP,
+conflicto persistente después de cargar la revisión actual, error de refetch oculto y
+progreso de un lote seleccionado fuera de los 50 recientes. Cada defecto de código tiene
+una regresión que fallaba antes; el comando de evaluación se comprobó con `make -n evaluate`.
+
+| Comprobación | Resultado |
+|---|---|
+| Backend, PostgreSQL real `_test` | **55 pruebas correctas**; incluye cinco exportaciones OTel de errores y dos límites del simulado |
+| Ruff/formato/mypy | Correctos, también sobre `scripts/`; 26 módulos tipados |
+| Frontend | **20 pruebas correctas**, ESLint, TypeScript y build de producción correctos |
+| Navegador con Nginx y worker reales | **Tres recorridos Chromium correctos**, incluyendo conflictos, solo lectura, reapertura, CSP y navegación móvil |
+| Evaluación E5 real + simulado | `--check` correcto: 20 casos, 15/16 positivos, cuatro negativos bloqueados, citas/reglas 100 % sobre generados; verificación 10/10 positivos |
+| Stack aislado | Seis servicios construidos y levantados; simulado/hash, clave vacía y volúmenes propios |
+| Demo aislada con Celery | 17 propuestas, tres bloqueos, aprobación persistida y citas verificadas. El corpus de ese stack incluye las guías de los recorridos; hash comprueba integración, no calidad |
+| Traza distribuida de la demo | `90aff1aab276cda9c3d181a81644204e`, 410 spans, API/worker con `rag.retrieve`, `llm.generate` y `run/andina.enrich` |
+
+Evaluación guardada en `/tmp/andinarag-audit-evaluation.json`; no se reemplazó el reporte
+histórico con tiempos de otra máquina. Se mantiene el falso negativo MA-004. No hubo llamadas
+nuevas a Gemini, cambios de umbral/modelo ni nuevas dependencias. No se repitieron cortes
+reales de Redis/PostgreSQL ni pruebas de carga; se conserva la evidencia histórica de caídas.
+Permanece el aviso de deprecación Starlette/httpx del entorno de pruebas, sin fallos.
+
+API, worker y UI locales se reconstruyeron y actualizaron tras comprobar que no había
+lotes activos. Una comparación completa por ID de los DTO anteriores/posteriores conservó
+**63 propuestas y cinco lotes**, incluidos contenido, revisión y estado. La API sigue usando
+Gemini + FastEmbed; `/health/ready` responde correctamente y la UI sirve su nonce CSP válido.
+Esta comprobación leyó datos y no generó nuevas propuestas. El stack aislado quedó detenido,
+con sus volúmenes conservados.

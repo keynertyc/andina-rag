@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render as renderComponent,
   screen,
@@ -7,9 +8,10 @@ import {
 import { describe, expect, it, vi } from "vitest";
 import type { Proposal } from "../../shared/api/types";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { createQueryClient } from "../../shared/api/queries";
+import { createQueryClient, resourceKey } from "../../shared/api/queries";
 import { NavigationGuard } from "../../app/NavigationGuard";
 import { ProposalForm } from "./ProposalForm";
+import { ProposalDetail } from "./ProposalDetail";
 
 const proposal: Proposal = {
   id: "p1",
@@ -281,4 +283,84 @@ it("reabre con una petición explícita sin campos de contenido", async () => {
     revision: 2,
     status: "pending_review",
   });
+});
+
+it("limpia el conflicto al descartar el borrador y cargar la revisión actual", async () => {
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        error: { code: "REVISION_CONFLICT", message: "Conflicto de prueba" },
+      }),
+      { status: 409 },
+    ),
+  );
+  const client = createQueryClient();
+  const view = (value: Proposal) => (
+    <QueryClientProvider client={client}>
+      <NavigationGuard>
+        <ProposalForm
+          proposal={value}
+          onSaved={vi.fn()}
+          onBatch={vi.fn()}
+          onReload={vi.fn()}
+        />
+      </NavigationGuard>
+    </QueryClientProvider>
+  );
+  const { rerender } = renderComponent(view(proposal));
+  fireEvent.change(screen.getByLabelText(/Título/), {
+    target: { value: "Mi borrador" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+  await screen.findByText("Conflicto de prueba");
+  rerender(
+    view({
+      ...proposal,
+      revision: 2,
+      content: { ...proposal.content, title: "Revisión actual" },
+    }),
+  );
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Descartar borrador y cargar versión actual",
+    }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Descartar borrador" }));
+  expect(screen.getByLabelText(/Título/)).toHaveValue("Revisión actual");
+  await waitFor(() =>
+    expect(screen.queryByText("Conflicto de prueba")).not.toBeInTheDocument(),
+  );
+});
+
+it("muestra un error de refresco sin desmontar el borrador", async () => {
+  const client = createQueryClient();
+  client.setDefaultOptions({ queries: { retry: false, staleTime: Infinity } });
+  client.setQueryData(resourceKey("/proposals/p1"), proposal);
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        error: {
+          code: "DATABASE_UNAVAILABLE",
+          message: "No se pudo actualizar la propuesta",
+        },
+      }),
+      { status: 503 },
+    ),
+  );
+  renderComponent(
+    <QueryClientProvider client={client}>
+      <NavigationGuard>
+        <ProposalDetail id="p1" onSaved={vi.fn()} onBatch={vi.fn()} />
+      </NavigationGuard>
+    </QueryClientProvider>,
+  );
+  fireEvent.change(screen.getByLabelText(/Título/), {
+    target: { value: "Borrador conservado" },
+  });
+  await act(async () => {
+    await client.refetchQueries({ queryKey: resourceKey("/proposals/p1") });
+  });
+  await screen.findByText("No se pudo actualizar la propuesta");
+  expect(screen.getByLabelText(/Título/)).toHaveValue("Borrador conservado");
+  client.clear();
 });

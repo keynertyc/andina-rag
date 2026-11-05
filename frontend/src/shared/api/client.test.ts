@@ -51,3 +51,28 @@ describe("Contrato HTTP", () => {
     await expect(api("/batches")).rejects.toBeInstanceOf(ApiError);
   });
 });
+
+it("conserva la cancelación al abortar durante la lectura del cuerpo", async () => {
+  const controller = new AbortController();
+  const response = new Response("{}");
+  vi.spyOn(response, "json").mockImplementation(async () => {
+    controller.abort();
+    throw controller.signal.reason;
+  });
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+  await expect(
+    api("/proposals", { signal: controller.signal }),
+  ).rejects.toMatchObject({ name: "AbortError" });
+});
+
+it("informa timeout si vence el plazo mientras se lee el cuerpo", async () => {
+  const deadline = new AbortController();
+  vi.spyOn(AbortSignal, "timeout").mockReturnValue(deadline.signal);
+  const response = new Response("{}");
+  vi.spyOn(response, "json").mockImplementation(async () => {
+    deadline.abort(new DOMException("Deadline", "TimeoutError"));
+    throw deadline.signal.reason;
+  });
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+  await expect(api("/proposals")).rejects.toMatchObject({ code: "TIMEOUT" });
+});

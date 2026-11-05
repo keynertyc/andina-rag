@@ -28,7 +28,8 @@ async function request(path: string, options?: RequestInit) {
     let body;
     try {
       body = await response.json();
-    } catch {
+    } catch (error) {
+      if (signal.aborted) throw error;
       throw new ApiError(
         response.ok
           ? "La API devolvió una respuesta no válida."

@@ -12,6 +12,6 @@ check:
 demo:
 	docker compose exec -T api python -m scripts.demo --url http://localhost:8000/api/v1
 evaluate:
-	docker compose exec -T api python -m scripts.evaluate --check
+	docker compose exec -T -e LLM_PROVIDER=mock -e EMBEDDING_PROVIDER=fastembed api python -m scripts.evaluate --check
 	mkdir -p reports
 	docker compose cp api:/app/reports/evaluation.json reports/evaluation.json

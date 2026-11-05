@@ -138,8 +138,9 @@ de logs y estados de UI. Las verificaciones ejecutadas están en `reports/verifi
 No se atribuye una revisión humana al código generado. La implementación inicial se verificó
 sin llamadas reales a Gemini; el 5 de noviembre se corrigió y comprobó su integración con
 credenciales locales, como se describe arriba. No se verificaron rendimiento a escala,
-OCR o escenarios multiusuario. GitHub
-Actions debe confirmarse en el remoto después de publicar el commit. La persona que entregue
+OCR, autenticación multiusuario o aislamiento entre organizaciones. Sí se prueban conflictos
+y decisiones concurrentes de dos analistas. El commit `e043ab8` pasó los tres jobs de GitHub
+Actions; los commits posteriores se verifican de nuevo por su SHA. La persona que entregue
 debe revisar y comprender las decisiones que defenderá en entrevista.
 
 ## Referencias consultadas

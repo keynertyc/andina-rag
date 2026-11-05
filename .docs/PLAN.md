@@ -6,7 +6,10 @@ acordadas son Gemini/simulado, Docker local, bloqueo sin evidencia y conservaci�
 La iteración de revisión y mantenibilidad está implementada y verificada localmente:
 [plan y ejecución de mejoras](IMPROVEMENT_PLAN.md). La evidencia actual está en
 [verification.md](../reports/verification.md#iteración-de-revisión-y-mantenibilidad-2026-11-05).
-La ejecución remota de CI del nuevo candidato requiere publicar sus cambios.
+La implementación publicada en `e043ab8` pasó sus tres jobs de
+[CI remoto](https://github.com/keynertyc/andina-rag/actions/runs/42045149124).
+La revisión posterior requisito por requisito y sus correcciones están en la
+[auditoría de cumplimiento](COMPLIANCE_AUDIT.md); el CI de cada commit posterior se comprueba por su SHA.
 
 ## Etapas
 

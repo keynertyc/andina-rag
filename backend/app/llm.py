@@ -61,8 +61,10 @@ class MockProvider:
         ).strip()
         result = GeneratedProposal(
             title=title[:80],
-            description=description or f"Producto de {product.brand}.",
-            tags=list(dict.fromkeys([product.category.casefold(), product.brand.casefold()])),
+            description=(description or f"Producto de {product.brand}.")[:4000],
+            tags=list(
+                dict.fromkeys(value.casefold()[:100] for value in (product.category, product.brand))
+            ),
             citations=[chunk["id"] for chunk in context[:3]],
         )
         return LLMResult(result.model_dump_json())
@@ -102,8 +104,9 @@ class GeminiProvider:
                         max_output_tokens=2048,
                     ),
                 )
-        except (httpx.TimeoutException, httpx.NetworkError, TimeoutError) as exc:
-            raise TransientError("LLM_TIMEOUT") from exc
+        except (httpx.TimeoutException, httpx.NetworkError, TimeoutError):
+            # OTel records chained exceptions; provider messages can contain private data.
+            raise TransientError("LLM_TIMEOUT") from None
         except errors.APIError as exc:
             if exc.code == 429 or (exc.code is not None and exc.code >= 500):
                 delay = None
@@ -114,10 +117,10 @@ class GeminiProvider:
                     pass
                 raise TransientError(
                     "LLM_RATE_LIMIT" if exc.code == 429 else "LLM_UNAVAILABLE", delay
-                ) from exc
+                ) from None
             raise AppError(
                 "LLM_REJECTED_REQUEST", "El proveedor rechazó la solicitud", 502
-            ) from exc
+            ) from None
         usage = response.usage_metadata
         return LLMResult(
             text=response.text or "",
@@ -161,7 +164,7 @@ def generate_validated(
                 if not set(proposal.citations) <= allowed:
                     raise ValueError("Las citas deben pertenecer a los fragmentos recuperados")
                 return proposal
-            except (ValidationError, ValueError) as exc:
+            except (ValidationError, ValueError):
                 span.set_attribute("llm.output_valid", False)
                 # Do not log model output or validation input: both are untrusted content.
                 logger.warning("invalid_llm_output", extra={"attempt": attempt + 1})
@@ -170,7 +173,8 @@ def generate_validated(
                     "Respeta longitudes y usa solo los IDs del contexto."
                 )
                 if attempt == 1:
+                    # A chained ValidationError would export the untrusted input in its stacktrace.
                     raise AppError(
                         "INVALID_LLM_OUTPUT", "La salida del modelo no validó", 502
-                    ) from exc
+                    ) from None
     raise AssertionError("Unreachable")

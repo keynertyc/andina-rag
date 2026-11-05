@@ -18,6 +18,13 @@ import type { Batch, Proposal, ReviewAction } from "../../shared/api/types";
 import { Empty, ErrorAlert, Status } from "../../shared/ui/Feedback";
 import { useLeaveGuard, useNavigationGuard } from "../../app/NavigationGuard";
 
+type ReviewIntent = "save" | "approve" | "reject" | "reopen";
+const decisionStatus = {
+  approve: "approved",
+  reject: "rejected",
+  reopen: "pending_review",
+} as const;
+
 type Draft = { title: string; description: string; tags: string };
 function draftOf(proposal: Proposal): Draft {
   return { ...proposal.content, tags: proposal.content.tags.join(", ") };
@@ -88,22 +95,14 @@ export function ProposalForm({
     dispatch({ type: "server", proposal });
   }, [proposal]);
   const save = useMutation({
-    mutationFn: (action: "save" | "approve" | "reject" | "reopen") =>
+    mutationFn: (action: ReviewIntent) =>
       api<Proposal>(`/proposals/${proposal.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           revision: base.revision,
-          ...(["save", "approve"].includes(action) ? values : {}),
-          ...(action === "save"
-            ? {}
-            : {
-                status: {
-                  approve: "approved",
-                  reject: "rejected",
-                  reopen: "pending_review",
-                }[action as "approve" | "reject" | "reopen"],
-              }),
+          ...(action === "save" || action === "approve" ? values : {}),
+          status: action === "save" ? undefined : decisionStatus[action],
         }),
       }),
     onSuccess: (result, action) => {
@@ -132,7 +131,7 @@ export function ProposalForm({
   });
   const busy = save.isPending || regenerate.isPending;
   useLeaveGuard(dirty, busy);
-  function act(action: "save" | "approve" | "reject" | "reopen") {
+  function act(action: ReviewIntent) {
     if (
       busy ||
       changedElsewhere ||
@@ -142,7 +141,7 @@ export function ProposalForm({
     setNotice("");
     save.mutate(action);
   }
-  const working = (action: string, label: string) =>
+  const working = (action: ReviewIntent, label: string) =>
     save.isPending && save.variables === action ? `${label}…` : label;
   return (
     <Stack component="article" spacing={2}>
@@ -426,6 +425,9 @@ export function ProposalForm({
           <Button
             color="error"
             onClick={() => {
+              save.reset();
+              regenerate.reset();
+              setNotice("");
               const reject = confirm === "reject";
               dispatch({ type: "reset", proposal });
               setConfirm(null);

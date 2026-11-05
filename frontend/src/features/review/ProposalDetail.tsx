@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {
   invalidateResources,
@@ -28,16 +29,19 @@ export function ProposalDetail({
       <Typography role="status">Cargando propuesta…</Typography>
     );
   return (
-    <ProposalForm
-      key={id}
-      proposal={query.data}
-      onReload={() => void query.refetch()}
-      onBatch={onBatch}
-      onSaved={(proposal) => {
-        client.setQueryData(resourceKey(path), proposal);
-        void invalidateResources(client, "/proposals?");
-        onSaved(proposal);
-      }}
-    />
+    <Stack spacing={2}>
+      <ErrorAlert error={query.error} retry={() => void query.refetch()} />
+      <ProposalForm
+        key={id}
+        proposal={query.data}
+        onReload={() => void query.refetch()}
+        onBatch={onBatch}
+        onSaved={(proposal) => {
+          client.setQueryData(resourceKey(path), proposal);
+          void invalidateResources(client, "/proposals?");
+          onSaved(proposal);
+        }}
+      />
+    </Stack>
   );
 }

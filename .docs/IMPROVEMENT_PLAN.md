@@ -2,8 +2,9 @@
 
 Estado: **implementación completada y verificación local realizada**. Iteración del 5 de
 noviembre de 2026. Se mantienen el diagnóstico y el plan originales como registro; las
-rutas de los hallazgos describen el código anterior a la reorganización. La publicación
-del candidato y su CI remoto quedan fuera de la verificación local.
+rutas de los hallazgos describen el código anterior a la reorganización. Publicada en
+`e043ab8`, con [tres jobs remotos correctos](https://github.com/keynertyc/andina-rag/actions/runs/42045149124).
+La revisión posterior de todo el enunciado está en [COMPLIANCE_AUDIT.md](COMPLIANCE_AUDIT.md).
 
 ## Registro de ejecución
 

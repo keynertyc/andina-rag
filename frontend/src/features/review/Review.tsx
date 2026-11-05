@@ -13,6 +13,7 @@ import type { Batch, Proposal } from "../../shared/api/types";
 import {
   hasActiveWork,
   usePage,
+  useResource,
   invalidateResources,
 } from "../../shared/api/queries";
 import {
@@ -42,9 +43,13 @@ export function Review({
   if (batch) params.set("batch_id", batch);
   const query = usePage<Proposal>(`/proposals?${params}`);
   const batches = usePage<Batch>("/batches?limit=50", hasActiveWork);
+  const batchProgress = useResource<Batch>(
+    batch ? `/batches/${batch}` : null,
+    (value) => !value.terminal,
+  );
   useEffect(() => {
     void invalidateResources(client, "/proposals");
-  }, [client, batches.dataUpdatedAt]);
+  }, [client, batches.dataUpdatedAt, batchProgress.data]);
   const rows = query.data?.items ?? [];
   const firstId = query.data?.items[0]?.id;
   const activeId = selected ?? firstId;
@@ -115,7 +120,14 @@ export function Review({
           Mostrando el lote {batch.slice(0, 8)}.
         </Alert>
       )}
-      <ErrorAlert error={query.error} retry={() => void query.refetch()} />
+      <ErrorAlert
+        error={query.error ?? batchProgress.error ?? batches.error}
+        retry={() => {
+          void query.refetch();
+          void batches.refetch();
+          if (batch) void batchProgress.refetch();
+        }}
+      />
       <Box
         sx={{
           display: "grid",
