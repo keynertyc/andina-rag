@@ -22,6 +22,11 @@ validación Pydantic, citas inventadas, corrección acotada, bloqueo sin llamada
 backoff, agotamiento, duplicado ocupado y contrato del SDK Gemini (timeout, 429, 5xx y 400).
 Las de React ejercitan edición/aprobación, error 409 y bloqueo desactualizado con citas visibles.
 
+La regresión de Gemini usa el SDK real con `httpx.MockTransport`, sin una llamada de pago:
+comprueba que el cuerpo contiene `responseJsonSchema` y `additionalProperties: false`,
+en lugar del campo incompatible del esquema legado. Así cubre la serialización que no
+ejercitan los dobles del método `generate_content`.
+
 ## PostgreSQL real
 
 ```sh

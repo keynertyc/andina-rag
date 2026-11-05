@@ -96,7 +96,9 @@ class GeminiProvider:
                     config=types.GenerateContentConfig(
                         system_instruction=SYSTEM_INSTRUCTION,
                         response_mime_type="application/json",
-                        response_schema=GeneratedProposal,
+                        # Preserve JSON Schema keywords such as additionalProperties;
+                        # the legacy Schema conversion emits unsupported wire fields.
+                        response_json_schema=GeneratedProposal.model_json_schema(),
                         max_output_tokens=2048,
                     ),
                 )

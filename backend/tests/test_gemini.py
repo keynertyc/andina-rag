@@ -4,9 +4,11 @@ from unittest.mock import MagicMock
 
 import httpx
 import pytest
+from app.config import get_settings
 from app.errors import AppError, TransientError
-from app.llm import SYSTEM_INSTRUCTION, GeminiProvider
+from app.llm import SYSTEM_INSTRUCTION, GeminiProvider, generate_validated
 from google.genai import errors
+from pydantic import SecretStr
 
 
 def client_mock(monkeypatch):
@@ -57,3 +59,65 @@ def test_provider_client_error_is_terminal(monkeypatch, product):
     with pytest.raises(AppError) as error:
         GeminiProvider().generate(product, [{"id": "c1", "text": "rules"}])
     assert error.value.code == "LLM_REJECTED_REQUEST"
+
+
+def test_real_sdk_sends_native_json_schema_without_unsupported_schema_fields(monkeypatch, product):
+    """Exercise SDK serialization, rather than replacing generate_content itself."""
+    from google import genai
+
+    real_client = genai.Client
+    requests = []
+    output = {
+        "title": "Puna Bufanda azul",
+        "description": "Bufanda de lana azul.",
+        "tags": ["puna", "textiles"],
+        "citations": ["c1"],
+    }
+
+    def google_transport(request):
+        payload = json.loads(request.content)
+        requests.append(payload)
+        configuration = payload.get("generationConfig", {})
+        schema = configuration.get("responseJsonSchema")
+        if schema is None or schema.get("additionalProperties") is not False:
+            return httpx.Response(
+                400,
+                json={
+                    "error": {
+                        "code": 400,
+                        "status": "INVALID_ARGUMENT",
+                        "message": (
+                            "Unknown name additional_properties at "
+                            "generation_config.response_schema"
+                        ),
+                    }
+                },
+            )
+        assert "responseSchema" not in configuration
+        assert "additional_properties" not in schema
+        return httpx.Response(
+            200,
+            json={
+                "candidates": [
+                    {
+                        "content": {"role": "model", "parts": [{"text": json.dumps(output)}]},
+                        "finishReason": "STOP",
+                    }
+                ],
+                "usageMetadata": {"promptTokenCount": 120, "candidatesTokenCount": 30},
+            },
+        )
+
+    transport = httpx.Client(transport=httpx.MockTransport(google_transport))
+
+    def client_with_transport(**kwargs):
+        kwargs["http_options"] = kwargs["http_options"].model_copy(
+            update={"httpx_client": transport}
+        )
+        return real_client(**kwargs)
+
+    monkeypatch.setattr(get_settings(), "gemini_api_key", SecretStr("test-not-a-real-key"))
+    monkeypatch.setattr("google.genai.Client", client_with_transport)
+    proposal = generate_validated(GeminiProvider(), product, [{"id": "c1", "text": "Puna rules"}])
+    assert proposal.citations == ["c1"]
+    assert len(requests) == 1

@@ -38,6 +38,7 @@ No mezcles documentos indexados con hash y E5; el filtro de modelo impide compar
 | Corte entre persistencia y envío | Consulta lotes pendientes y reenvíalos; el resultado ya persistido no se sobrescribe |
 | PostgreSQL no disponible | `docker compose start db`; espera readiness y reenvía trabajo no finalizado si agotó recuperación automática |
 | Timeout/429/5xx | Espera los tres reintentos; revisa cuota/configuración si termina fallido |
+| Gemini rechaza la solicitud con 400 | No implica por sí solo una clave inválida. Actualiza al código con `response_json_schema`, reconstruye API/worker y reenvía los fallidos. Consulta `reports/gemini-verification.json` |
 | Salida inválida | Consulta error del producto; tras una corrección fallida se requiere reintento explícito |
 | Producto sin evidencia | Sube una guía pertinente y crea otro lote; reenviar el anterior no cambia su snapshot |
 | Propuesta desactualizada | Usa «Regenerar con guías vigentes»; se conserva la anterior |

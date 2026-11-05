@@ -30,5 +30,18 @@ La evaluación actual usa embeddings reales y un LLM simulado; no se atribuyen e
 a Gemini. El conjunto exploratorio fue ampliado al detectar fallos y no constituye un test ciego.
 
 El workflow de GitHub Actions está incluido; el resultado remoto se consulta en Actions del
-repositorio. La integración real con Gemini, la carga de 100 mil productos y una revisión
-visual móvil no se han verificado en esta sesión. No se ha enviado el enlace al portal de entrega.
+repositorio. La carga de 100 mil productos y una revisión visual móvil no se han verificado.
+No se ha enviado el enlace al portal de entrega.
+
+## Actualización del 5 de noviembre: Gemini real
+
+- La clave fue aceptada al consultar modelos; el modelo configurado estaba disponible.
+- Se reprodujo HTTP 400 `INVALID_ARGUMENT` por el campo `additional_properties` de
+  `generation_config.response_schema`.
+- Se cambió al esquema JSON nativo con `response_json_schema` y se conservó validación local estricta.
+- La prueba del transporte real del SDK falló antes del cambio y pasó después. Backend: **35 pruebas**.
+- Se reconstruyeron y actualizaron API/worker sin cambiar la clave ni los productos originales.
+- El mismo lote pasó de 15 fallidos a **15 propuestas y cero fallos**; cinco productos
+  permanecieron bloqueados por evidencia. Se comprobaron las referencias de citas de las 15 propuestas.
+- La evidencia funcional está en [gemini-verification.json](gemini-verification.json).
+  No convierte las métricas del informe con simulado en un benchmark de calidad de Gemini.

@@ -1,0 +1,41 @@
+{
+  "verified_at": "2026-11-05T05:07:11.057406+00:00",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash-lite",
+  "batch_id": "a946026f-4536-4936-82bd-bb0e742beac7",
+  "root_cause": {
+    "http_status": 400,
+    "provider_status": "INVALID_ARGUMENT",
+    "unsupported_field": "generation_config.response_schema.additional_properties"
+  },
+  "fix": "Send GeneratedProposal.model_json_schema() through response_json_schema and keep local Pydantic validation.",
+  "before": {
+    "failed": 15,
+    "blocked": 5
+  },
+  "after": {
+    "succeeded": 15,
+    "failed": 0,
+    "blocked": 5,
+    "proposals_with_verified_citation_references": 15
+  },
+  "reported_products": [
+    {
+      "product_id": "MA-001",
+      "status": "succeeded"
+    },
+    {
+      "product_id": "MA-002",
+      "status": "succeeded"
+    },
+    {
+      "product_id": "MA-003",
+      "status": "succeeded"
+    }
+  ],
+  "regression_test": "test_real_sdk_sends_native_json_schema_without_unsupported_schema_fields",
+  "limitations": [
+    "Functional validation using the existing batch, not a new blind quality benchmark.",
+    "The committed evaluation.json metrics still describe the deterministic mock generator."
+  ]
+}

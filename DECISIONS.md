@@ -97,6 +97,22 @@ para 10/10 positivos de verificación; la alternativa, 9/10 (falló la chalina p
 léxica). Ambas bloquearon los dos negativos. Es una mejora en este conjunto pequeño,
 no evidencia suficiente para afirmar superioridad general. Se necesitaría un corpus mayor.
 
+## Esquema nativo de Gemini (5 de noviembre)
+
+La primera llamada real a Gemini devolvió HTTP 400 `INVALID_ARGUMENT`: al convertir
+`GeneratedProposal` con `extra="forbid"` mediante `response_schema`, el SDK enviaba
+`additional_properties`, no admitido por ese esquema de la API. La clave y el modelo eran válidos.
+
+Se utiliza `response_json_schema=GeneratedProposal.model_json_schema()`, que conserva el
+JSON Schema nativo con `additionalProperties: false`. La validación Pydantic local, sus límites
+y la lista permitida de citas permanecen activos. No se relajó el contrato para evitar el error.
+
+La regresión ejercita el SDK real con un transporte HTTP determinista y comprueba el cuerpo
+serializado. Los dobles iniciales del método `generate_content` no cubrían esa conversión.
+Tras el cambio se reintentó el lote existente con Gemini: 15 propuestas generadas, cero fallos
+y los cinco bloqueos previos por evidencia. Referencias verificadas en las 15 propuestas;
+resultado funcional en `reports/gemini-verification.json`, sin claves ni salida privada.
+
 ## Patrones y operación
 
 Servicios de aplicación, adaptadores sustituibles e inyección de dependencias. SQLAlchemy
@@ -119,8 +135,10 @@ idempotencia, validación, efectos de versiones, configuración de reintentos y 
 Se corrigieron la calibración incompleta, la compatibilidad SQLAlchemy/OTel, la correlación
 de logs y estados de UI. Las verificaciones ejecutadas están en `reports/verification.md`.
 
-No se atribuye una revisión humana al código generado. No se verificaron llamadas reales
-a Gemini sin credenciales, ni rendimiento a escala, OCR o escenarios multiusuario. GitHub
+No se atribuye una revisión humana al código generado. La implementación inicial se verificó
+sin llamadas reales a Gemini; el 5 de noviembre se corrigió y comprobó su integración con
+credenciales locales, como se describe arriba. No se verificaron rendimiento a escala,
+OCR o escenarios multiusuario. GitHub
 Actions debe confirmarse en el remoto después de publicar el commit. La persona que entregue
 debe revisar y comprender las decisiones que defenderá en entrevista.
 
