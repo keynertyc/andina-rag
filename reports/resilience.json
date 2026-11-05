@@ -1,0 +1,7 @@
+{
+  "redis_outage": "503; batch persisted with dispatch error",
+  "redis_recovery": "same batch completed, exactly one proposal",
+  "redelivery": "four duplicate Celery messages preserve one approved proposal",
+  "postgres_outage": "503 with DATABASE_UNAVAILABLE",
+  "postgres_recovery": "persisted review survives database restart"
+}

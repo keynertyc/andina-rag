@@ -1,0 +1,76 @@
+name: checks
+on: [push, pull_request]
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.2-pg17
+        env:
+          POSTGRES_USER: andina
+          POSTGRES_PASSWORD: local-demo-only
+          POSTGRES_DB: andina_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U andina -d andina_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://andina:local-demo-only@localhost:5432/andina_test
+      PYTHONPATH: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.3"
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run ruff check backend scripts
+      - run: uv run ruff format --check backend scripts
+      - run: uv run mypy
+      - run: uv run pytest -q --cov=app --cov-report=term-missing
+      - uses: actions/cache@v4
+        with:
+          path: model-cache
+          key: e5-linux-${{ hashFiles('backend/app/embeddings.py') }}
+      - name: Evaluate real embeddings with the deterministic LLM
+        env:
+          DATABASE_URL: postgresql+psycopg://andina:local-demo-only@localhost:5432/andina_test
+          LLM_PROVIDER: mock
+          EMBEDDING_PROVIDER: fastembed
+          OTEL_ENABLED: "false"
+        run: uv run --directory . python -m scripts.evaluate --check
+
+  frontend:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.11.0"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start the real worker with deterministic adapters
+        env:
+          EMBEDDING_PROVIDER: hash
+          SIMILARITY_THRESHOLD: "0.05"
+        run: docker compose up -d --build --wait --wait-timeout 180
+      - run: docker compose exec -T api python -m scripts.demo --url http://localhost:8000/api/v1 --approve --verify-trace --jaeger-url http://jaeger:16686
+      - if: always()
+        run: docker compose logs --tail=80
+      - if: always()
+        run: docker compose down

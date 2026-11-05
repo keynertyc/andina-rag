@@ -1,0 +1,98 @@
+name: andinarag
+
+x-backend: &backend
+  image: andinarag-backend:local
+  build:
+    context: .
+    dockerfile: backend/Dockerfile
+  environment: &backend-env
+    DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-andina}:${POSTGRES_PASSWORD:-local-demo-only}@db:5432/${POSTGRES_DB:-andina}
+    REDIS_URL: redis://redis:6379/0
+    UPLOAD_DIR: /app/uploads
+    MODEL_CACHE_DIR: /app/model-cache
+    LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+    GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+    EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-fastembed}
+    SIMILARITY_THRESHOLD: ${SIMILARITY_THRESHOLD:-0.80}
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+  volumes:
+    - uploads:/app/uploads
+    - model-cache:/app/model-cache
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.2-pg17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-andina}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-demo-only}
+      POSTGRES_DB: ${POSTGRES_DB:-andina}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7.4.2-alpine
+    command: [redis-server, --appendonly, "yes"]
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  jaeger:
+    image: cr.jaegertracing.io/jaegertracing/jaeger:2.22.0
+    ports:
+      - "127.0.0.1:16686:16686"
+
+  api:
+    <<: *backend
+    command: [sh, -c, "alembic upgrade head && exec uvicorn app.api:app --host 0.0.0.0 --port 8000 --no-access-log"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      jaeger:
+        condition: service_started
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/live')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  worker:
+    <<: *backend
+    command: [sh, -c, "python -m app.warmup && exec celery -A app.tasks:celery_app worker --loglevel=INFO --concurrency=2"]
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, "celery -A app.tasks:celery_app inspect ping --timeout=5 | grep -q pong"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15m
+      retries: 3
+
+  ui:
+    build:
+      context: frontend
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres:
+  redis:
+  uploads:
+  model-cache:

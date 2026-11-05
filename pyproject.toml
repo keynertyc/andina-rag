@@ -1,0 +1,40 @@
+[project]
+name = "andinarag"
+version = "0.1.0"
+description = "Enriquecimiento de catálogo con evidencia y revisión humana"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi", "uvicorn[standard]", "python-multipart", "pydantic-settings",
+  "sqlalchemy==2.0.55", "psycopg[binary]", "alembic", "pgvector",
+  "celery[redis]>=5.6,<6", "redis", "pypdf", "fastembed", "google-genai",
+  "opentelemetry-sdk", "opentelemetry-exporter-otlp-proto-http",
+  "opentelemetry-instrumentation-fastapi", "opentelemetry-instrumentation-celery",
+  "opentelemetry-instrumentation-sqlalchemy", "opentelemetry-instrumentation-logging",
+  "python-json-logger", "httpx",
+]
+
+[dependency-groups]
+dev = ["pytest", "pytest-cov", "ruff", "mypy", "reportlab", "types-redis"]
+
+[tool.pytest.ini_options]
+pythonpath = ["backend", "."]
+testpaths = ["backend/tests"]
+markers = ["integration: requires PostgreSQL with pgvector", "worker: requires running Compose stack"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "backend"
+files = ["backend/app"]
+check_untyped_defs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["backend/app"]

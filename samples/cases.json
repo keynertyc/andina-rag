@@ -1,0 +1,262 @@
+[
+  {
+    "split": "calibration",
+    "product": {
+      "id": "MA-001",
+      "brand": "Puna",
+      "category": "textiles",
+      "title": "BUFANDA DE ALPACA AZUL",
+      "description": "Bufanda con 60 % alpaca, color azul.",
+      "tags": []
+    },
+    "expected_rule": "PUNA-01",
+    "should_block": false
+  },
+  {
+    "split": "calibration",
+    "product": {
+      "id": "MA-002",
+      "brand": "Valle",
+      "category": "cafe",
+      "title": "CAFÉ MOLIDO 250 G",
+      "description": "Café molido, tueste medio, 250 g.",
+      "tags": []
+    },
+    "expected_rule": "VALLE-01",
+    "should_block": false
+  },
+  {
+    "split": "calibration",
+    "product": {
+      "id": "MA-003",
+      "brand": "Kintu",
+      "category": "cuidado",
+      "title": "JABÓN DE AVENA 90 G",
+      "description": "Jabón con avena, 90 g. El mejor!",
+      "tags": []
+    },
+    "expected_rule": "KINTU-01",
+    "should_block": false
+  },
+  {
+    "split": "calibration",
+    "product": {
+      "id": "MA-004",
+      "brand": "Puna",
+      "category": "textiles",
+      "title": "GORRO ROJO",
+      "description": "Gorro de lana, color rojo.",
+      "tags": []
+    },
+    "expected_rule": "PUNA-02",
+    "should_block": false
+  },
+  {
+    "split": "calibration",
+    "product": {
+      "id": "MA-005",
+      "brand": "Valle",
+      "category": "cafe",
+      "title": "CAFÉ EN GRANO CUSCO",
+      "description": "Café en grano de Cusco, 500 g.",
+      "tags": []
+    },
+    "expected_rule": "VALLE-02",
+    "should_block": false
+  },
+  {
+    "split": "calibration",
+    "product": {
+      "id": "MA-006",
+      "brand": "Kintu",
+      "category": "cuidado",
+      "title": "CREMA DE MANOS 60 ML",
+      "description": "Crema de manos con karité, 60 ml.",
+      "tags": []
+    },
+    "expected_rule": "KINTU-02",
+    "should_block": false
+  },
+  {
+    "split": "calibration",
+    "product": {
+      "id": "MA-007",
+      "brand": "Orbita",
+      "category": "electronica",
+      "title": "Controlador de señales digitales",
+      "description": "Módulo FPGA para prototipado electrónico.",
+      "tags": []
+    },
+    "expected_rule": null,
+    "should_block": true
+  },
+  {
+    "split": "calibration",
+    "product": {
+      "id": "MA-008",
+      "brand": "Puna",
+      "category": "textiles",
+      "title": "Licencia de software contable",
+      "description": "Programa de contabilidad empresarial, cálculo de impuestos y nóminas.",
+      "tags": []
+    },
+    "expected_rule": null,
+    "should_block": true
+  },
+  {
+    "split": "verification",
+    "product": {
+      "id": "MA-009",
+      "brand": "Puna",
+      "category": "textiles",
+      "title": "CHALINA VERDE",
+      "description": "Chalina de lana verde, 150 cm.",
+      "tags": []
+    },
+    "expected_rule": "PUNA-02",
+    "should_block": false
+  },
+  {
+    "split": "verification",
+    "product": {
+      "id": "MA-010",
+      "brand": "Puna",
+      "category": "textiles",
+      "title": "MANTA GRIS",
+      "description": "Manta gris, 120 por 180 cm.",
+      "tags": []
+    },
+    "expected_rule": "PUNA-02",
+    "should_block": false
+  },
+  {
+    "split": "verification",
+    "product": {
+      "id": "MA-011",
+      "brand": "Puna",
+      "category": "textiles",
+      "title": "PONCHO DE LANA",
+      "description": "Poncho de lana marrón. Garantizado!",
+      "tags": []
+    },
+    "expected_rule": "PUNA-01",
+    "should_block": false
+  },
+  {
+    "split": "verification",
+    "product": {
+      "id": "MA-012",
+      "brand": "Puna",
+      "category": "textiles",
+      "title": "GUANTES DE ALPACA",
+      "description": "Guantes con 40 % alpaca, talla M.",
+      "tags": []
+    },
+    "expected_rule": "PUNA-02",
+    "should_block": false
+  },
+  {
+    "split": "verification",
+    "product": {
+      "id": "MA-013",
+      "brand": "Valle",
+      "category": "cafe",
+      "title": "CAFÉ MOLIDO CAJAMARCA",
+      "description": "Café de Cajamarca, molienda fina, 250 g.",
+      "tags": []
+    },
+    "expected_rule": "VALLE-02",
+    "should_block": false
+  },
+  {
+    "split": "verification",
+    "product": {
+      "id": "MA-014",
+      "brand": "Valle",
+      "category": "cafe",
+      "title": "CAFÉ DE ESPECIALIDAD 1 KG",
+      "description": "Café en grano, 1 kg, tueste oscuro.",
+      "tags": []
+    },
+    "expected_rule": "VALLE-01",
+    "should_block": false
+  },
+  {
+    "split": "verification",
+    "product": {
+      "id": "MA-015",
+      "brand": "Valle",
+      "category": "cafe",
+      "title": "CAFÉ TUeste CLARO",
+      "description": "Café molido, tueste claro, 200 g. El mejor!",
+      "tags": []
+    },
+    "expected_rule": "VALLE-02",
+    "should_block": false
+  },
+  {
+    "split": "verification",
+    "product": {
+      "id": "MA-016",
+      "brand": "Kintu",
+      "category": "cuidado",
+      "title": "CHAMPÚ 250 ML",
+      "description": "Champú con romero, 250 ml.",
+      "tags": []
+    },
+    "expected_rule": "KINTU-02",
+    "should_block": false
+  },
+  {
+    "split": "verification",
+    "product": {
+      "id": "MA-017",
+      "brand": "Kintu",
+      "category": "cuidado",
+      "title": "BÁLSAMO LABIAL 10 G",
+      "description": "Bálsamo labial con cacao, 10 g.",
+      "tags": []
+    },
+    "expected_rule": "KINTU-01",
+    "should_block": false
+  },
+  {
+    "split": "verification",
+    "product": {
+      "id": "MA-018",
+      "brand": "Kintu",
+      "category": "cuidado",
+      "title": "JABÓN LÍQUIDO 300 ML",
+      "description": "Jabón líquido con aloe, 300 ml.",
+      "tags": []
+    },
+    "expected_rule": "KINTU-02",
+    "should_block": false
+  },
+  {
+    "split": "verification",
+    "product": {
+      "id": "MA-019",
+      "brand": "Orbita",
+      "category": "electronica",
+      "title": "Osciloscopio digital",
+      "description": "Instrumento de medición de circuitos, dos canales.",
+      "tags": []
+    },
+    "expected_rule": null,
+    "should_block": true
+  },
+  {
+    "split": "verification",
+    "product": {
+      "id": "MA-020",
+      "brand": "Valle",
+      "category": "cafe",
+      "title": "Osciloscopio digital",
+      "description": "Instrumento de medición de circuitos, dos canales.",
+      "tags": []
+    },
+    "expected_rule": null,
+    "should_block": true
+  }
+]

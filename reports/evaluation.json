@@ -1,0 +1,494 @@
+{
+  "dataset_sha256": "3db44bf55a18df999a61bef83d8de81e375e439b559c8361677229ea4c40d7b8",
+  "embedding_model": "intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "llm_provider": "mock",
+  "llm_model": "template-v1",
+  "chunking": {
+    "tokens": 400,
+    "overlap": 60
+  },
+  "threshold": 0.8,
+  "calibration": [
+    {
+      "threshold": 0.7,
+      "false_generations": 1,
+      "true_generations": 6,
+      "expected_evidence_found": 6
+    },
+    {
+      "threshold": 0.75,
+      "false_generations": 1,
+      "true_generations": 6,
+      "expected_evidence_found": 6
+    },
+    {
+      "threshold": 0.8,
+      "false_generations": 0,
+      "true_generations": 5,
+      "expected_evidence_found": 5
+    },
+    {
+      "threshold": 0.85,
+      "false_generations": 0,
+      "true_generations": 0,
+      "expected_evidence_found": 0
+    },
+    {
+      "threshold": 0.9,
+      "false_generations": 0,
+      "true_generations": 0,
+      "expected_evidence_found": 0
+    }
+  ],
+  "calibration_summary": {
+    "cases": 8,
+    "generated": 5,
+    "generation_coverage": 0.625,
+    "positive_coverage": 0.8333,
+    "valid_citations": 1.0,
+    "rule_compliance": 1.0,
+    "recall_at_5": 0.8333,
+    "correct_insufficient_evidence_blocking": 1.0,
+    "mean_latency_ms": 0.31
+  },
+  "calibration_cases": [
+    {
+      "product_id": "MA-001",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.8216797113418579,
+      "latency_ms": 2.32,
+      "error": null
+    },
+    {
+      "product_id": "MA-002",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.8373295068740845,
+      "latency_ms": 0.06,
+      "error": null
+    },
+    {
+      "product_id": "MA-003",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.8135797492516205,
+      "latency_ms": 0.03,
+      "error": null
+    },
+    {
+      "product_id": "MA-004",
+      "should_block": false,
+      "generated": false,
+      "blocked": true,
+      "valid_citations": false,
+      "rules_pass": false,
+      "expected_evidence_found": false,
+      "best_similarity": 0.7966486811637878,
+      "latency_ms": 0.0,
+      "error": null
+    },
+    {
+      "product_id": "MA-005",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.827133059501648,
+      "latency_ms": 0.03,
+      "error": null
+    },
+    {
+      "product_id": "MA-006",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.8344893652809423,
+      "latency_ms": 0.04,
+      "error": null
+    },
+    {
+      "product_id": "MA-007",
+      "should_block": true,
+      "generated": false,
+      "blocked": true,
+      "valid_citations": false,
+      "rules_pass": false,
+      "expected_evidence_found": false,
+      "best_similarity": null,
+      "latency_ms": 0.0,
+      "error": null
+    },
+    {
+      "product_id": "MA-008",
+      "should_block": true,
+      "generated": false,
+      "blocked": true,
+      "valid_citations": false,
+      "rules_pass": false,
+      "expected_evidence_found": false,
+      "best_similarity": 0.7942632314123663,
+      "latency_ms": 0.0,
+      "error": null
+    }
+  ],
+  "overall": {
+    "cases": 20,
+    "generated": 15,
+    "generation_coverage": 0.75,
+    "positive_coverage": 0.9375,
+    "valid_citations": 1.0,
+    "rule_compliance": 1.0,
+    "recall_at_5": 0.9375,
+    "correct_insufficient_evidence_blocking": 1.0,
+    "mean_latency_ms": 0.13
+  },
+  "verification": {
+    "cases": 12,
+    "generated": 10,
+    "generation_coverage": 0.8333,
+    "positive_coverage": 1.0,
+    "valid_citations": 1.0,
+    "rule_compliance": 1.0,
+    "recall_at_5": 1.0,
+    "correct_insufficient_evidence_blocking": 1.0,
+    "mean_latency_ms": 0.02
+  },
+  "baseline": {
+    "description": "400 tokens, no overlap, lexical matching, same generator",
+    "verification": {
+      "cases": 12,
+      "generated": 9,
+      "generation_coverage": 0.75,
+      "positive_coverage": 0.9,
+      "valid_citations": 1.0,
+      "rule_compliance": 1.0,
+      "recall_at_5": 0.9,
+      "correct_insufficient_evidence_blocking": 1.0,
+      "mean_latency_ms": 0.01
+    },
+    "cases": [
+      {
+        "product_id": "MA-009",
+        "should_block": false,
+        "generated": false,
+        "blocked": true,
+        "valid_citations": false,
+        "rules_pass": false,
+        "expected_evidence_found": false,
+        "best_similarity": null,
+        "latency_ms": 0.0,
+        "error": null
+      },
+      {
+        "product_id": "MA-010",
+        "should_block": false,
+        "generated": true,
+        "blocked": false,
+        "valid_citations": true,
+        "rules_pass": true,
+        "expected_evidence_found": true,
+        "best_similarity": 0.2,
+        "latency_ms": 0.02,
+        "error": null
+      },
+      {
+        "product_id": "MA-011",
+        "should_block": false,
+        "generated": true,
+        "blocked": false,
+        "valid_citations": true,
+        "rules_pass": true,
+        "expected_evidence_found": true,
+        "best_similarity": 0.25,
+        "latency_ms": 0.02,
+        "error": null
+      },
+      {
+        "product_id": "MA-012",
+        "should_block": false,
+        "generated": true,
+        "blocked": false,
+        "valid_citations": true,
+        "rules_pass": true,
+        "expected_evidence_found": true,
+        "best_similarity": 0.5,
+        "latency_ms": 0.02,
+        "error": null
+      },
+      {
+        "product_id": "MA-013",
+        "should_block": false,
+        "generated": true,
+        "blocked": false,
+        "valid_citations": true,
+        "rules_pass": true,
+        "expected_evidence_found": true,
+        "best_similarity": 0.5,
+        "latency_ms": 0.02,
+        "error": null
+      },
+      {
+        "product_id": "MA-014",
+        "should_block": false,
+        "generated": true,
+        "blocked": false,
+        "valid_citations": true,
+        "rules_pass": true,
+        "expected_evidence_found": true,
+        "best_similarity": 0.8,
+        "latency_ms": 0.02,
+        "error": null
+      },
+      {
+        "product_id": "MA-015",
+        "should_block": false,
+        "generated": true,
+        "blocked": false,
+        "valid_citations": true,
+        "rules_pass": true,
+        "expected_evidence_found": true,
+        "best_similarity": 0.6666666666666666,
+        "latency_ms": 0.02,
+        "error": null
+      },
+      {
+        "product_id": "MA-016",
+        "should_block": false,
+        "generated": true,
+        "blocked": false,
+        "valid_citations": true,
+        "rules_pass": true,
+        "expected_evidence_found": true,
+        "best_similarity": 0.5,
+        "latency_ms": 0.02,
+        "error": null
+      },
+      {
+        "product_id": "MA-017",
+        "should_block": false,
+        "generated": true,
+        "blocked": false,
+        "valid_citations": true,
+        "rules_pass": true,
+        "expected_evidence_found": true,
+        "best_similarity": 0.5,
+        "latency_ms": 0.02,
+        "error": null
+      },
+      {
+        "product_id": "MA-018",
+        "should_block": false,
+        "generated": true,
+        "blocked": false,
+        "valid_citations": true,
+        "rules_pass": true,
+        "expected_evidence_found": true,
+        "best_similarity": 0.4,
+        "latency_ms": 0.02,
+        "error": null
+      },
+      {
+        "product_id": "MA-019",
+        "should_block": true,
+        "generated": false,
+        "blocked": true,
+        "valid_citations": false,
+        "rules_pass": false,
+        "expected_evidence_found": false,
+        "best_similarity": null,
+        "latency_ms": 0.0,
+        "error": null
+      },
+      {
+        "product_id": "MA-020",
+        "should_block": true,
+        "generated": false,
+        "blocked": true,
+        "valid_citations": false,
+        "rules_pass": false,
+        "expected_evidence_found": false,
+        "best_similarity": null,
+        "latency_ms": 0.0,
+        "error": null
+      }
+    ]
+  },
+  "retrieval_mean_latency_ms": 14.75,
+  "cases": [
+    {
+      "product_id": "MA-009",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.8120140917309592,
+      "latency_ms": 0.03,
+      "error": null
+    },
+    {
+      "product_id": "MA-010",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.804457426071167,
+      "latency_ms": 0.02,
+      "error": null
+    },
+    {
+      "product_id": "MA-011",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.8238915941618351,
+      "latency_ms": 0.02,
+      "error": null
+    },
+    {
+      "product_id": "MA-012",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.811282467169616,
+      "latency_ms": 0.02,
+      "error": null
+    },
+    {
+      "product_id": "MA-013",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.8202916276628763,
+      "latency_ms": 0.02,
+      "error": null
+    },
+    {
+      "product_id": "MA-014",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.844984769821167,
+      "latency_ms": 0.02,
+      "error": null
+    },
+    {
+      "product_id": "MA-015",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.8246631622314453,
+      "latency_ms": 0.02,
+      "error": null
+    },
+    {
+      "product_id": "MA-016",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.8412609791004089,
+      "latency_ms": 0.02,
+      "error": null
+    },
+    {
+      "product_id": "MA-017",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.8300660848617613,
+      "latency_ms": 0.02,
+      "error": null
+    },
+    {
+      "product_id": "MA-018",
+      "should_block": false,
+      "generated": true,
+      "blocked": false,
+      "valid_citations": true,
+      "rules_pass": true,
+      "expected_evidence_found": true,
+      "best_similarity": 0.8294121128671117,
+      "latency_ms": 0.02,
+      "error": null
+    },
+    {
+      "product_id": "MA-019",
+      "should_block": true,
+      "generated": false,
+      "blocked": true,
+      "valid_citations": false,
+      "rules_pass": false,
+      "expected_evidence_found": false,
+      "best_similarity": null,
+      "latency_ms": 0.0,
+      "error": null
+    },
+    {
+      "product_id": "MA-020",
+      "should_block": true,
+      "generated": false,
+      "blocked": true,
+      "valid_citations": false,
+      "rules_pass": false,
+      "expected_evidence_found": false,
+      "best_similarity": 0.7792048686505818,
+      "latency_ms": 0.0,
+      "error": null
+    }
+  ],
+  "checks": {
+    "valid_citations": true,
+    "rule_compliance": true,
+    "recall_at_5": true,
+    "positive_coverage": true,
+    "correct_blocking": true
+  },
+  "limitations": [
+    "Small synthetic dataset, not a general quality benchmark.",
+    "Citation membership does not prove semantic entailment.",
+    "Mock generator results do not establish Gemini quality.",
+    "Latency measured locally; model warmup excluded."
+  ]
+}
