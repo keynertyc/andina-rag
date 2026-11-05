@@ -1,7 +1,4 @@
-from collections import Counter
-from typing import Any
-
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -12,49 +9,9 @@ from app.imports import request_fingerprint
 from app.models import (
     Batch,
     BatchItem,
-    Chunk,
-    Document,
     DocumentVersion,
-    Proposal,
-    ProposalCitation,
 )
 from app.schemas import Product
-
-
-def batch_view(session: Session, batch: Batch) -> dict[str, Any]:
-    counts: Counter[str] = Counter(
-        {
-            status: count
-            for status, count in session.execute(
-                select(BatchItem.status, func.count())
-                .where(BatchItem.batch_id == batch.id)
-                .group_by(BatchItem.status)
-            )
-        }
-    )
-    total = sum(counts.values())
-    finished = counts["succeeded"] + counts["blocked"] + counts["failed"]
-    terminal = finished == total
-    if batch.dispatch_error or (terminal and (counts["blocked"] or counts["failed"])):
-        status = "with_errors"
-    elif terminal:
-        status = "completed"
-    elif counts["running"] or finished:
-        status = "running"
-    else:
-        status = "pending"
-    return {
-        "id": batch.id,
-        "filename": batch.filename,
-        "created_at": batch.created_at,
-        "status": status,
-        "total": total,
-        "finished": finished,
-        "terminal": terminal,
-        "counts": dict(counts),
-        "dispatch_error": batch.dispatch_error,
-        "configuration": batch.configuration,
-    }
 
 
 def create_batch(
@@ -114,55 +71,3 @@ def create_batch(
             ) from None
         return existing
     return batch
-
-
-def proposal_is_stale(session: Session, item: BatchItem) -> bool:
-    if not item.context_version_ids:
-        return False
-    active_count = session.scalar(
-        select(func.count())
-        .select_from(DocumentVersion)
-        .where(
-            DocumentVersion.id.in_(item.context_version_ids), DocumentVersion.is_active.is_(True)
-        )
-    )
-    return active_count != len(item.context_version_ids)
-
-
-def proposal_view(session: Session, proposal: Proposal, detail: bool = False) -> dict[str, Any]:
-    item = session.get(BatchItem, proposal.item_id)
-    assert item is not None
-    result = {
-        "id": proposal.id,
-        "item_id": item.id,
-        "batch_id": item.batch_id,
-        "product_id": item.product_id,
-        "original": item.original,
-        "content": proposal.content,
-        "status": proposal.status,
-        "revision": proposal.revision,
-        "is_stale": proposal_is_stale(session, item),
-        "created_at": proposal.created_at,
-    }
-    if detail:
-        result["generated"] = proposal.generated
-        rows = session.execute(
-            select(Chunk, DocumentVersion, Document)
-            .join(ProposalCitation, ProposalCitation.chunk_id == Chunk.id)
-            .join(DocumentVersion, DocumentVersion.id == Chunk.version_id)
-            .join(Document, Document.id == DocumentVersion.document_id)
-            .where(ProposalCitation.proposal_id == proposal.id)
-            .order_by(Chunk.position)
-        )
-        result["citations"] = [
-            {
-                "id": chunk.id,
-                "text": chunk.text,
-                "document_title": document.title,
-                "version": version.number,
-                "page": chunk.page,
-                "heading": chunk.heading,
-            }
-            for chunk, version, document in rows
-        ]
-    return result

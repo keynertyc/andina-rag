@@ -20,15 +20,23 @@ export type Citation = {
   page: number | null;
   heading: string | null;
 };
+export type ReviewStatus = "pending_review" | "approved" | "rejected";
+export type ReviewAction =
+  | "edit"
+  | "approve"
+  | "reject"
+  | "reopen"
+  | "regenerate";
 export type Proposal = {
   id: string;
   product_id: string;
   batch_id: string;
   original: Product;
   content: Content;
-  status: string;
+  status: ReviewStatus;
   revision: number;
   is_stale: boolean;
+  allowed_actions: ReviewAction[];
   citations?: Citation[];
 };
 export type Guide = {
@@ -45,7 +53,7 @@ export type Guide = {
 export type Batch = {
   id: string;
   filename: string;
-  status: string;
+  status: "pending" | "running" | "completed" | "with_errors";
   total: number;
   finished: number;
   terminal: boolean;

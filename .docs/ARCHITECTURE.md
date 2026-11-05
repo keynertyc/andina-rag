@@ -52,19 +52,24 @@ en las guías y no se afirma rendimiento sobre 100 mil productos sin medirlo.
   terminaron. Un error de despacho también se muestra como `with_errors`, aunque no sea terminal.
 - Propuesta: `pending_review`, `approved`, `rejected`; `is_stale` es independiente.
 
-Las revisiones optimistas rechazan `revision` antigua con `409`. Editar sin aprobar devuelve
-la propuesta a revisión. Las citas no son editables desde PATCH. La regeneración crea un lote
+Las revisiones optimistas rechazan `revision` antigua con `409`. Una aprobada/rechazada
+queda de solo lectura hasta una reapertura explícita sin contenido. Solo se editan pendientes
+vigentes; guardar sin cambios no modifica estado ni revisión. `reviews.py` aplica la política
+y genera `allowed_actions` para el cliente. Las citas no son editables desde PATCH. La regeneración crea un lote
 nuevo y no sustituye el historial. La aprobación comprueba vigencia bajo bloqueo de documentos.
 
 El lock asesor pertenece a una conexión dedicada, se conserva entre transacciones cortas
-y se libera en `finally` o al morir la conexión. Una tarea duplicada ocupada reintenta sin
+y se libera en `finally` o al morir la conexión. El error del intento se persiste después
+del rollback y antes de liberar ese mismo lock; Celery planifica los reintentos después.
+El reenvío manual también relee y modifica ítems bajo ese lock. Una tarea duplicada ocupada reintenta sin
 cambiar el estado de su propietaria; si ya hay resultado, termina sin escribir.
 
 ## Errores y recuperación
 
 PostgreSQL caído implica `503` al consultar/persistir. Redis caído permite leer datos pero no
-despachar; el recurso persistido expone el error y su ID. El endpoint de reintento reenvía
-pendientes/en curso y reinicia fallidos; nunca sobrescribe resultados correctos.
+despachar; el recurso persistido expone el error y su ID. El endpoint de reintento distingue `mode=failed` y `mode=unfinished`: el primero reinicia
+fallidos y el segundo recupera pendientes/interrumpidos que no posee un worker. No se alteran
+correctos ni bloqueados. Reintentar fallidos no oculta un error de despacho de otros pendientes.
 
 El worker clasifica timeout/429/5xx e infraestructura como transitorios. Agotar intentos o
 mantener salida inválida produce error de ítem; la ausencia de evidencia produce bloqueo.
@@ -99,3 +104,38 @@ Logs JSON con `trace_id` y `span_id` inyectados explícitamente. La API devuelve
 No se registran prompts, claves, texto completo de guías ni salida inválida del modelo.
 Los eventos de infraestructura fuera de una traza tienen ID cero. Jaeger recibe OTLP/HTTP
 en la red interna y mantiene almacenamiento efímero para esta demostración.
+
+## Organización de código y frontend
+
+`api.py` compone FastAPI, middleware, errores y salud. `routers/` adapta HTTP; `reviews.py`
+centraliza decisiones; `documents.py` crea versiones; `dispatch.py` publica trabajo y maneja
+recuperación; `queries.py` carga vistas por página sin N+1; `services.py` crea lotes idempotentes.
+No se añade una abstracción de repositorios ni transacciones propia.
+
+React se divide en `app/`, `features/{review,batches,guides}` y `shared/{api,ui}`.
+Material UI Core aporta controles con un tema común; el CSS restante cubre acceso rápido,
+foco, saltos de línea y movimiento reducido. Las vistas se cargan por importación dinámica.
+TanStack Query administra datos del servidor; los borradores permanecen fuera de su caché.
+
+Las listas usan páginas de 50 y `X-Has-More`. Lotes y guías solo se consultan periódicamente
+mientras hay trabajo activo y con la página visible. Se refrescan al recuperar foco; el detalle
+usa respuestas de mutación y las invalidaciones de listas/guías. Un catálogo paginado de
+últimas versiones permite seleccionar documentos aunque no estén en la página visible y
+detectar la finalización de su indexación. El ítem recibe un refresco final al terminar el lote.
+
+La URL conserva vista, lote, estado, propuesta, documento y paginaciones. Se usa `replaceState`,
+sin crear un historial por cada filtro. Cambiar de contexto con un borrador requiere confirmar;
+un `409` conserva campos y permite comparar la versión actual. No hay reintentos automáticos
+para mutaciones. Las importaciones ambiguas conservan una clave por hash de archivo en
+sessionStorage y memoria; al finalizar correctamente se elimina ese intento.
+
+Nginx inyecta `$request_id` como nonce por respuesta HTML y en `style-src-elem`; Emotion
+recibe el mismo nonce. HTML no cacheable, ETag y respuestas condicionales desactivados evitan
+mezclar HTML y cabeceras de distintas solicitudes. `style-src-attr 'unsafe-inline'` permite
+posicionamiento dinámico de MUI; `script-src 'self'` sigue sin permitir scripts inline.
+
+`AppHeader.tsx` reúne marca, estado y navegación. Por debajo de 600 px queda sticky y muestra
+un menú hamburguesa de Material UI; por encima se conserva la navegación horizontal.
+El menú se desmonta al cambiar a escritorio para evitar overlays invisibles. La navegación
+se realiza después de cerrar el menú y restaurar foco, antes de abrir una posible confirmación
+de borrador. Cambiar de sección confirmado reinicia el scroll; cancelar conserva el editor.

@@ -113,3 +113,41 @@ corrección están conservadas: es una evaluación exploratoria, no un test cieg
 Tres jobs: backend (lint/tipos/PostgreSQL real/evaluación E5), frontend (lint/componentes/build)
 y smoke (stack completo con dobles deterministas y trazas). Sin claves de Gemini en GitHub.
 `uv.lock` y `package-lock.json` controlan las versiones. Confirma el resultado remoto antes de entregar.
+
+## Navegador con Nginx y worker reales
+
+Se requiere Compose 2.24.4 o posterior para `!override`. La configuración separada fuerza
+LLM simulado y embeddings hash, elimina la clave Gemini de API/worker y usa volúmenes/puertos
+propios. No reutilices el nombre del proyecto de tu entorno de trabajo.
+
+```sh
+docker compose -p andinarag-check -f compose.yaml -f compose.test.yaml up -d --build --wait --wait-timeout 180
+cd frontend
+npm ci
+npx playwright install chromium
+npm run test:e2e
+cd ..
+docker compose -p andinarag-check -f compose.yaml -f compose.test.yaml stop
+```
+
+La UI de prueba es `http://localhost:18080`; la API es `18000`, PostgreSQL `_test` es `55433`
+y Jaeger es `17686`. El navegador se puede dirigir a otra instancia determinista con
+`E2E_BASE_URL=http://localhost:8080 npm run test:e2e`. CI ejecuta esta variante en su stack efímero.
+
+Playwright comprueba carga de guía, lote real de Celery, conflicto con otro analista,
+conservación de borrador, aprobación de solo lectura, reapertura, rechazo con descarte,
+nueva versión y regeneración, además de menús, nonce renovado y diseño de 360 px.
+Los datos son sintéticos y llevan ámbitos propios para permitir repetir la prueba.
+Las capturas/trazas se guardan en `frontend/test-results/`, fuera de Git.
+
+La suite backend incluye decisiones concurrentes, aprobación frente a activación, persistencia
+fallida bajo bloqueo, recuperación manual y agotamiento real del presupuesto de intentos.
+También mide que las listas de lotes y propuestas usan dos consultas por página con uno o
+varios resultados, y verifica la última página exacta con `X-Has-More`.
+Las pruebas React/HTTP cubren solo lectura, no-op en formulario, validación, borradores remotos,
+reapertura, rechazo sin contenido, respuestas inválidas, detalles de error y contexto en la URL.
+
+El recorrido adicional de navegación móvil comprueba sticky durante scroll, menú de tres
+opciones, sección activa, Escape y retorno de foco, cambio a escritorio con menú abierto,
+ancho de 320 px, navegación desde una posición desplazada y cancelación con borrador intacto.
+La navegación se prueba sobre el mismo Nginx de producción, con CSP activa.

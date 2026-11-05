@@ -16,3 +16,9 @@ izquierda y detalle comparativo a la derecha; navegación por Guías, Lotes y Re
 - Movimiento limitado a estados de interacción y respetando prefers-reduced-motion.
 
 Dirección fijada por el plan de implementación y su requisito de evitar complejidad extra.
+
+En móvil (menos de 600 px), el encabezado queda sticky, con botón de menú de 44 px,
+marca y proveedor compacto. Las secciones se abren en un menú con la opción actual marcada.
+En escritorio se mantiene la navegación horizontal. Elegir otra sección inicia su vista arriba;
+si existe un borrador, primero se resuelve la confirmación. Los destinos de anclas dejan espacio
+para que el encabezado no oculte el contenido.

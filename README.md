@@ -35,7 +35,8 @@ El resultado actual es 15 propuestas y cinco bloqueos, sobre 20 productos: cuatr
 esperados y un falso negativo conservador (`MA-004`, gorro rojo) por similitud inferior al umbral.
 Se conserva este caso para mostrar el límite de la recuperación, sin inventar evidencia.
 El estado `with_errors` incluye los bloqueos. Abre **Mesa de revisión** para
-comparar originales, editar y aprobar/rechazar. En **Guías de contenido** puedes subir
+comparar originales, editar y aprobar/rechazar. Aprobadas y rechazadas quedan de solo lectura
+hasta pulsar **Reabrir revisión**; guardar sin cambios no altera su estado. En **Guías de contenido** puedes subir
 `samples/guides/puna-textiles-v2.md` como nueva versión de Puna y observar las propuestas
 desactualizadas. Los ejemplos son completamente ficticios.
 
@@ -80,7 +81,10 @@ de verdad del estado, la deduplicación y las revisiones.
 backend/app/          API, servicios, adaptadores y tareas
 backend/migrations/  migraciones Alembic versionadas
 backend/tests/       pruebas unitarias y de integración
-frontend/src/        consola de guías, lotes y revisión
+frontend/src/app/    composición, tema, navegación y protección de borradores
+frontend/src/features/ revisión, lotes y guías con Material UI y TanStack Query
+frontend/src/shared/ cliente HTTP, contratos y componentes compartidos
+frontend/e2e/        recorridos en Chromium contra Nginx y el worker real
 samples/             PDF, Markdown, CSV, JSON y casos esperados
 scripts/             demo, evaluación y comprobación de resiliencia
 .docs/               contratos, arquitectura, pruebas y operación
@@ -142,3 +146,7 @@ afirmación esté respaldada. La aprobación humana sigue siendo necesaria.
 
 Lee [DECISIONS.md](DECISIONS.md), [la arquitectura](.docs/ARCHITECTURE.md),
 [los contratos HTTP](.docs/API.md) y [el runbook](.docs/RUNBOOK.md).
+
+Las mejoras de revisión, estructura y estados están detalladas en
+[IMPROVEMENT_PLAN.md](.docs/IMPROVEMENT_PLAN.md). Para ejecutar el navegador contra un entorno
+separado y simulado, consulta [TESTING.md](.docs/TESTING.md#navegador-con-nginx-y-worker-reales).

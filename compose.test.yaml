@@ -1,0 +1,29 @@
+# Isolated deterministic stack. Always use -p andinarag-check (or a separate CI project).
+services:
+  db:
+    environment:
+      POSTGRES_USER: andina
+      POSTGRES_PASSWORD: local-demo-only
+      POSTGRES_DB: andina_test
+    ports: !override ["127.0.0.1:55433:5432"]
+  api:
+    image: andinarag-backend:check
+    ports: !override ["127.0.0.1:18000:8000"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://andina:local-demo-only@db:5432/andina_test
+      LLM_PROVIDER: mock
+      GEMINI_API_KEY: ""
+      EMBEDDING_PROVIDER: hash
+      SIMILARITY_THRESHOLD: "0.05"
+  worker:
+    image: andinarag-backend:check
+    environment:
+      DATABASE_URL: postgresql+psycopg://andina:local-demo-only@db:5432/andina_test
+      LLM_PROVIDER: mock
+      GEMINI_API_KEY: ""
+      EMBEDDING_PROVIDER: hash
+      SIMILARITY_THRESHOLD: "0.05"
+  ui:
+    ports: !override ["127.0.0.1:18080:80"]
+  jaeger:
+    ports: !override ["127.0.0.1:17686:16686"]

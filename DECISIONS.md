@@ -117,7 +117,7 @@ resultado funcional en `reports/gemini-verification.json`, sin claves ni salida 
 
 Servicios de aplicación, adaptadores sustituibles e inyección de dependencias. SQLAlchemy
 provee transacciones y consultas explícitas; no se añade un repositorio genérico ni una clase
-propia de Unit of Work. React usa formularios controlados y polling con cancelación.
+propia de Unit of Work. React conserva formularios controlados y usa TanStack Query para caché, cancelación e invalidación.
 Las revisiones llevan un contador para detectar escrituras desde pantallas desactualizadas.
 
 Se fijó SQLAlchemy 2.0.55 porque la instrumentación OpenTelemetry instalada declara compatibilidad
@@ -152,3 +152,26 @@ debe revisar y comprender las decisiones que defenderá en entrevista.
 - [Google Gen AI SDK](https://github.com/googleapis/python-genai)
 - [OpenTelemetry Python Contrib](https://github.com/open-telemetry/opentelemetry-python-contrib)
 - [React: efectos y limpieza](https://react.dev/learn/synchronizing-with-effects)
+
+## Iteración de revisión y mantenibilidad
+
+Se eligió Material UI Core frente a shadcn/ui para uniformar formularios, tablas y diálogos
+con menos controles propios en esta consola. No se combina con Tailwind ni otro kit visual.
+Se configuró Emotion con nonce y se verificó la CSP en Nginx real; los scripts siguen
+limitados al mismo origen. Las vistas se cargan bajo demanda.
+
+TanStack Query reemplaza consultas periódicas independientes que descoordinaban lista,
+detalle y guías. Su caché contiene datos del servidor, no borradores. Se configuran reintentos
+GET acotados, cancelación y polling por actividad; las mutaciones no se repiten automáticamente.
+No se incorporan Redux, un framework de formularios ni un router para tres vistas.
+
+El usuario eligió que aprobadas/rechazadas sean de solo lectura hasta **Reabrir revisión**.
+Las transiciones viven en una política pequeña compartida con el DTO `allowed_actions`.
+Un guardado idéntico no altera la revisión. Rechazar no guarda un borrador silenciosamente.
+La regeneración solo procede con evidencia obsoleta y conserva el historial.
+
+Se mantuvieron los advisory locks y transacciones cortas; los errores ahora se guardan
+antes de liberar la propiedad del intento. Se añadieron regresiones concurrentes reales,
+consultas de lista acotadas y pruebas de navegador con proveedor determinista. No se cambian
+chunking, embeddings, umbral ni proveedor durante este refactor. El detalle de verificaciones
+y sus límites está en `reports/verification.md`.

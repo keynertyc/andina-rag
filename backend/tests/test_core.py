@@ -122,26 +122,26 @@ def test_transient_failure_retries_and_exhausts(monkeypatch):
     monkeypatch.setattr(
         "app.tasks.process_item", Mock(side_effect=TransientError("LLM_RATE_LIMIT"))
     )
-    save = Mock()
-    monkeypatch.setattr("app.tasks.save_error", save)
     task = Mock(request=SimpleNamespace(retries=0))
     task.retry.side_effect = RuntimeError("retry scheduled")
     with pytest.raises(RuntimeError, match="retry scheduled"):
         run_task(task, "item", "item-id")
-    assert save.call_args.args[2] == "pending"
+    assert task.retry.call_args.kwargs["max_retries"] == 3
     task.request.retries = 3
     task.retry.reset_mock()
     run_task(task, "item", "item-id")
-    assert save.call_args.args[2] == "failed"
+    from app.tasks import process_item
+
+    assert process_item.call_args.kwargs["retries_exhausted"] is True
     task.retry.assert_not_called()
 
 
 def test_duplicate_busy_task_cannot_overwrite_owner(monkeypatch):
     monkeypatch.setattr("app.tasks.process_item", Mock(side_effect=TransientError("ITEM_BUSY")))
-    save = Mock()
-    monkeypatch.setattr("app.tasks.save_error", save)
     run_task(Mock(request=SimpleNamespace(retries=3)), "item", "id")
-    save.assert_not_called()
+    from app.tasks import process_item
+
+    assert process_item.call_count == 1
 
 
 def test_product_import_and_idempotency_fingerprint(product):

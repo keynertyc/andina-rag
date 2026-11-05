@@ -3,6 +3,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+ReviewAction = Literal["edit", "approve", "reject", "reopen", "regenerate"]
+
 
 class Product(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
@@ -100,6 +102,7 @@ class ProposalView(BaseModel):
     status: Literal["pending_review", "approved", "rejected"]
     revision: int
     is_stale: bool
+    allowed_actions: list[ReviewAction]
     created_at: datetime
 
 

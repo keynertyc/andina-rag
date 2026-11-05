@@ -12,7 +12,7 @@ from sqlalchemy.exc import InterfaceError, OperationalError
 from app.config import get_settings
 from app.db import get_engine
 from app.errors import AppError, TransientError
-from app.processing import ingest_version, process_item, record_task_error
+from app.processing import ingest_version, process_item
 from app.telemetry import configure_logging, configure_telemetry
 
 settings = get_settings()
@@ -60,22 +60,13 @@ def retry_delay(retries: int, retry_after: float | None = None) -> float:
     return random.uniform(0.5, 1.0) * min(30, 2 ** (retries + 1))
 
 
-def save_error(kind: str, entity_id: str, status: str, payload: dict[str, Any]) -> None:
-    try:
-        record_task_error(kind, entity_id, status, payload)
-    except (OperationalError, InterfaceError):
-        logger.error(
-            "cannot_persist_task_error",
-            extra={"entity_id": entity_id, "error_code": payload["code"]},
-        )
-
-
 def run_task(task: Any, kind: str, entity_id: str) -> None:
+    retries = task.request.retries if isinstance(task.request.retries, int) else 0
+    exhausted = retries >= 3
     try:
-        (process_item if kind == "item" else ingest_version)(entity_id)
+        (process_item if kind == "item" else ingest_version)(entity_id, retries_exhausted=exhausted)
     except (TransientError, OperationalError, InterfaceError, SoftTimeLimitExceeded) as exc:
         code = exc.code if isinstance(exc, TransientError) else "INFRASTRUCTURE_UNAVAILABLE"
-        exhausted = task.request.retries >= 3
         if code == "ITEM_BUSY":
             # Another delivery owns the lock. Never change its state or retry budget.
             if not exhausted:
@@ -83,12 +74,6 @@ def run_task(task: Any, kind: str, entity_id: str) -> None:
                     exc=exc, countdown=retry_delay(task.request.retries), max_retries=3
                 ) from exc
             return
-        save_error(
-            kind,
-            entity_id,
-            ("failed" if kind == "item" else "error") if exhausted else "pending",
-            {"code": code, "message": "Fallo transitorio", "retry_exhausted": exhausted},
-        )
         logger.warning(
             "task_retry",
             extra={"entity_id": entity_id, "error_code": code, "retry": task.request.retries},
@@ -104,21 +89,9 @@ def run_task(task: Any, kind: str, entity_id: str) -> None:
                 max_retries=3,
             ) from exc
     except AppError as exc:
-        status = (
-            "blocked"
-            if kind == "item" and exc.code == "INSUFFICIENT_EVIDENCE"
-            else ("failed" if kind == "item" else "error")
-        )
-        save_error(kind, entity_id, status, exc.payload())
         trace.get_current_span().set_status(Status(StatusCode.ERROR, exc.code))
         logger.warning("task_failed", extra={"entity_id": entity_id, "error_code": exc.code})
     except Exception:
-        save_error(
-            kind,
-            entity_id,
-            "failed" if kind == "item" else "error",
-            {"code": "INTERNAL_ERROR", "message": "Error inesperado; revisa la configuración"},
-        )
         trace.get_current_span().set_status(Status(StatusCode.ERROR, "INTERNAL_ERROR"))
         logger.error("task_failed", extra={"entity_id": entity_id, "error_code": "INTERNAL_ERROR"})
 

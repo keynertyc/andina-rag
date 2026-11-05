@@ -3,6 +3,11 @@
 El [enunciado](andinarag-prueba-tecnica.md) es la fuente de requisitos. Las decisiones
 acordadas son Gemini/simulado, Docker local, bloqueo sin evidencia y conservación de historial.
 
+La iteración de revisión y mantenibilidad está implementada y verificada localmente:
+[plan y ejecución de mejoras](IMPROVEMENT_PLAN.md). La evidencia actual está en
+[verification.md](../reports/verification.md#iteración-de-revisión-y-mantenibilidad-2026-11-05).
+La ejecución remota de CI del nuevo candidato requiere publicar sus cambios.
+
 ## Etapas
 
 | Paso | Resultado implementado | Verificación |

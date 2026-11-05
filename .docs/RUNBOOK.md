@@ -54,6 +54,8 @@ Compose normal y `compose.dev.yaml` recrea DB/Redis para aplicar o quitar puerto
 2. Importar productos CSV; mostrar progreso, cuatro negativos bloqueados y el falso negativo
    conservador MA-004. Explicar el coste del umbral con la evaluación.
 3. Abrir una propuesta, comparar original, editar y guardar; aprobar otra y rechazar otra.
+   Comprobar que ambas decisiones quedan de solo lectura; reabrir explícitamente para editar.
+   Guardar sin cambios no altera revisión. Al rechazar un borrador se confirma su descarte.
 4. Cambiar filtros y recargar para comprobar persistencia; abrir citas y su página/versión.
 5. Añadir Puna v2; mostrar la marca de desactualización y regenerar un producto.
 6. Buscar el trace id de un lote nuevo en Jaeger y recorrer API → Celery → recuperación → LLM.
@@ -69,3 +71,17 @@ Compose normal y `compose.dev.yaml` recrea DB/Redis para aplicar o quitar puerto
 - Recorrer el código personalmente y confirmar que puedes defenderlo.
 - Solo entonces pegar el enlace en el portal de la prueba. No se ha automatizado esa acción.
 - Fecha del enunciado: 5 de noviembre de 2026, 23:22 UTC (18:22 en Lima).
+
+## Revisión y recuperación desde la aplicación
+
+- **Aprobada/rechazada:** solo lectura; pulsa Reabrir revisión antes de editar o cambiar decisión.
+- **Guías cambiadas:** se conservan decisión y citas históricas. Regenerar crea un lote nuevo.
+- **Conflicto entre analistas:** el borrador permanece; compara con la versión actual y elige
+  descartar/cargarla antes de enviar otra decisión. No hay sobrescritura automática.
+- **Error al importar:** consulta filas/campos y el ID del recurso si ya se persistió. El mismo
+  archivo mantiene la clave del intento ambiguo; después de un éxito, otra importación es nueva.
+- **Reintentar fallidos:** solo esos ítems, sin repetir resultados ni desbloquear falta de evidencia.
+- **Recuperar pendientes:** opción explícita para error de Redis o interrupción. Omite trabajo
+  bajo bloqueo activo. No es necesario pulsarla mientras el lote progresa normalmente.
+- Recargar conserva selección, filtros e historial mediante la URL. Los borradores no se
+  guardan en el navegador; se advierte al abandonar o recargar con cambios sin guardar.

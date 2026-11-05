@@ -16,3 +16,7 @@ test-results/
 uploads/
 model-cache/
 reports/local-*
+# Assistant hooks with machine-specific installation paths.
+.codex/hooks.json
+.cursor/hooks.json
+.gemini/settings.json

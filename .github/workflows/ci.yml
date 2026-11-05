@@ -70,6 +70,26 @@ jobs:
           SIMILARITY_THRESHOLD: "0.05"
         run: docker compose up -d --build --wait --wait-timeout 180
       - run: docker compose exec -T api python -m scripts.demo --url http://localhost:8000/api/v1 --approve --verify-trace --jaeger-url http://jaeger:16686
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.11.0"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - name: Browser regression against production Nginx and the real worker
+        run: npm run test:e2e
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: http://localhost:8080
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure
+          path: frontend/test-results/
+          retention-days: 7
       - if: always()
         run: docker compose logs --tail=80
       - if: always()

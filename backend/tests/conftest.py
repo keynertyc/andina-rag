@@ -55,6 +55,6 @@ def db(database):
 @pytest.fixture
 def client(db, monkeypatch, tmp_path: Path):
     monkeypatch.setattr(get_settings(), "upload_dir", tmp_path)
-    monkeypatch.setattr("app.api.ingest_task.apply_async", lambda **kwargs: None)
-    monkeypatch.setattr("app.api.enrich_task.apply_async", lambda **kwargs: None)
+    monkeypatch.setattr("app.dispatch.ingest_task.apply_async", lambda **kwargs: None)
+    monkeypatch.setattr("app.dispatch.enrich_task.apply_async", lambda **kwargs: None)
     return TestClient(app)

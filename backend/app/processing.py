@@ -4,9 +4,10 @@ import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
 
+from billiard.exceptions import SoftTimeLimitExceeded
 from sqlalchemy import select, text, update
+from sqlalchemy.exc import InterfaceError, OperationalError
 from sqlalchemy.orm import Session
 
 from app.db import get_engine
@@ -51,8 +52,8 @@ def entity_session(entity_id: str) -> Iterator[Session]:
                 connection.commit()
 
 
-def ingest_version(version_id: str) -> None:
-    with entity_session(version_id) as session:
+def ingest_version(version_id: str, *, retries_exhausted: bool = False) -> None:
+    with work_session("document", version_id, retries_exhausted) as session:
         version = session.get(DocumentVersion, version_id)
         if not version or version.status == "ready":
             return
@@ -116,8 +117,8 @@ def ingest_version(version_id: str) -> None:
         session.commit()
 
 
-def process_item(item_id: str) -> None:
-    with entity_session(item_id) as session:
+def process_item(item_id: str, *, retries_exhausted: bool = False) -> None:
+    with work_session("item", item_id, retries_exhausted) as session:
         item = session.get(BatchItem, item_id)
         if not item or item.status in {"succeeded", "blocked", "failed"}:
             return
@@ -186,14 +187,46 @@ def process_item(item_id: str) -> None:
             )
 
 
-def record_task_error(kind: str, entity_id: str, status: str, error: dict[str, Any]) -> None:
-    with Session(get_engine()) as session:
-        entity: BatchItem | DocumentVersion | None = (
-            session.get(BatchItem, entity_id)
-            if kind == "item"
-            else session.get(DocumentVersion, entity_id)
+@contextmanager
+def work_session(kind: str, entity_id: str, retries_exhausted: bool = False) -> Iterator[Session]:
+    """Persist failures before releasing ownership; retry scheduling happens afterwards."""
+    with entity_session(entity_id) as session:
+        try:
+            yield session
+        except Exception as exc:
+            try:
+                session.rollback()
+                record_task_error(session, kind, entity_id, exc, retries_exhausted)
+            except (OperationalError, InterfaceError):
+                logger.error("cannot_persist_task_error", extra={"entity_id": entity_id})
+            raise
+
+
+def record_task_error(
+    session: Session, kind: str, entity_id: str, exc: Exception, retries_exhausted: bool = False
+) -> None:
+    entity: BatchItem | DocumentVersion | None = (
+        session.get(BatchItem, entity_id)
+        if kind == "item"
+        else session.get(DocumentVersion, entity_id)
+    )
+    if entity is None or entity.status in {"succeeded", "ready", "blocked", "failed"}:
+        return
+    failed = "failed" if kind == "item" else "error"
+    if isinstance(exc, (TransientError, OperationalError, InterfaceError, SoftTimeLimitExceeded)):
+        exhausted = retries_exhausted or entity.attempts >= 4
+        code = exc.code if isinstance(exc, TransientError) else "INFRASTRUCTURE_UNAVAILABLE"
+        entity.status = failed if exhausted else "pending"
+        entity.error = {"code": code, "message": "Fallo transitorio", "retry_exhausted": exhausted}
+    elif isinstance(exc, AppError):
+        entity.status = (
+            "blocked" if kind == "item" and exc.code == "INSUFFICIENT_EVIDENCE" else failed
         )
-        if entity is not None and entity.status not in {"succeeded", "ready"}:
-            entity.status = status
-            entity.error = error
-            session.commit()
+        entity.error = exc.payload()
+    else:
+        entity.status = failed
+        entity.error = {
+            "code": "INTERNAL_ERROR",
+            "message": "Error inesperado; revisa la configuración",
+        }
+    session.commit()
